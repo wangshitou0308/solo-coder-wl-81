@@ -184,6 +184,12 @@ export default function DailyLogList() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Link
+                      to={`/daily/${log.id}`}
+                      className="p-2 rounded-lg text-primary-400 hover:text-primary-700 hover:bg-primary-50 transition-all"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Link>
                     <button
                       onClick={() => deleteLog(log.id)}
                       className="p-2 rounded-lg text-primary-400 hover:text-red-500 hover:bg-red-50 transition-all"

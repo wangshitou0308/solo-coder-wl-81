@@ -25,6 +25,7 @@ export default function App() {
           <Route path="/glasses/:id" element={<GlassesForm />} />
           <Route path="/daily" element={<DailyLogList />} />
           <Route path="/daily/new" element={<DailyLogForm />} />
+          <Route path="/daily/:id" element={<DailyLogForm />} />
           <Route path="/daily/analysis" element={<DailyLogAnalysis />} />
         </Route>
       </Routes>

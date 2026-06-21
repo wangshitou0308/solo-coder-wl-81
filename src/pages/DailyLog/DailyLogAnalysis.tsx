@@ -247,9 +247,10 @@ export default function DailyLogAnalysis() {
           </div>
           {sortedRecords.length > 0 && logs.length > 0 ? (
             <div className="space-y-3">
-              {sortedRecords.slice(-4).map((record, idx) => {
+              {sortedRecords.slice(-4).map((record, idx, arr) => {
                 const recordTime = new Date(record.examDate).getTime();
-                const prevTime = idx > 0 ? new Date(sortedRecords[sortedRecords.length - 4 + idx - 1].examDate).getTime() : 0;
+                const prevRecord = idx > 0 ? arr[idx - 1] : null;
+                const prevTime = prevRecord ? new Date(prevRecord.examDate).getTime() : 0;
                 const logsInPeriod = logs.filter((log) => {
                   const logTime = new Date(log.recordDate).getTime();
                   return logTime > prevTime && logTime <= recordTime;

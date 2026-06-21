@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { useDailyLogStore } from '@/store/dailyLogStore';
@@ -10,9 +10,11 @@ import { getTodayStr } from '@/utils/dateUtils';
 
 export default function DailyLogForm() {
   const navigate = useNavigate();
-  const { addLog } = useDailyLogStore();
+  const { id } = useParams();
+  const { addLog, updateLog, getLogById } = useDailyLogStore();
   const glasses = useGlassesStore((s) => s.glasses);
   const activeGlasses = glasses.filter((g) => g.status !== 'retired');
+  const isEditing = !!id;
 
   const [recordDate, setRecordDate] = useState(getTodayStr());
   const [recordTime, setRecordTime] = useState('');
@@ -22,6 +24,22 @@ export default function DailyLogForm() {
   const [durationMinutes, setDurationMinutes] = useState('');
   const [glassesId, setGlassesId] = useState('');
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (isEditing && id) {
+      const log = getLogById(id);
+      if (log) {
+        setRecordDate(log.recordDate);
+        setRecordTime(log.recordTime || '');
+        setSymptoms(log.symptoms);
+        setSeverity(log.severity);
+        setScene(log.scene);
+        setDurationMinutes(log.durationMinutes ? String(log.durationMinutes) : '');
+        setGlassesId(log.glassesId || '');
+        setNotes(log.notes || '');
+      }
+    }
+  }, [isEditing, id, getLogById]);
 
   const toggleSymptom = (symptom: SymptomType) => {
     setSymptoms((prev) =>
@@ -45,7 +63,12 @@ export default function DailyLogForm() {
       glassesId: glassesId || undefined,
       notes: notes || undefined,
     };
-    addLog(logData);
+
+    if (isEditing && id) {
+      updateLog(id, logData);
+    } else {
+      addLog(logData);
+    }
     navigate('/daily');
   };
 
@@ -59,7 +82,9 @@ export default function DailyLogForm() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h2 className="font-serif text-2xl font-semibold text-primary-800">新增日常记录</h2>
+          <h2 className="font-serif text-2xl font-semibold text-primary-800">
+            {isEditing ? '编辑日常记录' : '新增日常记录'}
+          </h2>
           <p className="text-sm text-primary-500">记录您的眼部不适和用眼场景</p>
         </div>
       </div>
@@ -201,7 +226,7 @@ export default function DailyLogForm() {
           </Link>
           <button type="submit" className="btn-primary">
             <Save className="w-4 h-4" />
-            保存记录
+            {isEditing ? '保存修改' : '保存记录'}
           </button>
         </div>
       </form>
