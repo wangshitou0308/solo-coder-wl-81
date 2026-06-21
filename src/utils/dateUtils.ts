@@ -6,6 +6,7 @@ import {
   parseISO,
   isAfter,
   isBefore,
+  getDay,
 } from 'date-fns';
 
 export const formatDate = (dateStr: string, fmt: string = 'yyyy年MM月dd日'): string => {
@@ -82,4 +83,16 @@ export const generateId = (): string => {
 
 export const getDateMonthsAgo = (months: number): string => {
   return format(addMonths(new Date(), -months), 'yyyy-MM-dd');
+};
+
+export const getNowTimeStr = (): string => {
+  return format(new Date(), 'HH:mm');
+};
+
+export const getDayOfWeek = (dateStr: string): number => {
+  return getDay(parseISO(dateStr));
+};
+
+export const getHourFromTime = (timeStr: string): number => {
+  return parseInt(timeStr.split(':')[0], 10);
 };

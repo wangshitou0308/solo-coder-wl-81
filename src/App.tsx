@@ -9,6 +9,13 @@ import GlassesForm from '@/pages/Glasses/GlassesForm';
 import DailyLogList from '@/pages/DailyLog/DailyLogList';
 import DailyLogForm from '@/pages/DailyLog/DailyLogForm';
 import DailyLogAnalysis from '@/pages/DailyLog/DailyLogAnalysis';
+import Settings from '@/pages/Settings';
+import Reminders from '@/pages/Reminders';
+import Plans from '@/pages/Plans';
+import Goals from '@/pages/Goals';
+import Report from '@/pages/Report';
+import Export from '@/pages/Export';
+import Profiles from '@/pages/Profiles';
 
 export default function App() {
   return (
@@ -27,6 +34,13 @@ export default function App() {
           <Route path="/daily/new" element={<DailyLogForm />} />
           <Route path="/daily/:id" element={<DailyLogForm />} />
           <Route path="/daily/analysis" element={<DailyLogAnalysis />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/reminders" element={<Reminders />} />
+          <Route path="/plans" element={<Plans />} />
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/report" element={<Report />} />
+          <Route path="/export" element={<Export />} />
+          <Route path="/profiles" element={<Profiles />} />
         </Route>
       </Routes>
     </Router>

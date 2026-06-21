@@ -6,6 +6,13 @@ import {
   ClipboardList,
   LineChart,
   Sparkles,
+  Settings,
+  Bell,
+  CalendarCheck,
+  Target,
+  FileText,
+  Download,
+  Users,
 } from 'lucide-react';
 
 const navItems = [
@@ -15,6 +22,13 @@ const navItems = [
   { to: '/glasses', icon: Glasses, label: '眼镜管理' },
   { to: '/daily', icon: ClipboardList, label: '日常记录' },
   { to: '/daily/analysis', icon: Sparkles, label: '关联分析' },
+  { to: '/reminders', icon: Bell, label: '提醒列表' },
+  { to: '/plans', icon: CalendarCheck, label: '计划管理' },
+  { to: '/goals', icon: Target, label: '健康目标' },
+  { to: '/report', icon: FileText, label: '月度报告' },
+  { to: '/export', icon: Download, label: '数据导出' },
+  { to: '/profiles', icon: Users, label: '档案管理' },
+  { to: '/settings', icon: Settings, label: '系统设置' },
 ];
 
 export default function Sidebar() {

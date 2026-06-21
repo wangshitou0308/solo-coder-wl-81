@@ -28,6 +28,8 @@ export const useOptometryStore = create<OptometryState>()(
         const now = new Date().toISOString();
         const newRecord: OptometryRecord = {
           ...record,
+          photos: record.photos ?? [],
+          tags: record.tags ?? [],
           id: generateId(),
           createdAt: now,
           updatedAt: now,

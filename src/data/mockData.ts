@@ -1,4 +1,4 @@
-import type { OptometryRecord, Glasses, DailyLog, AppSettings } from '@/types';
+import type { OptometryRecord, Glasses, DailyLog, AppSettings, Reminder, OptometryPlan, HealthGoal, UserProfile, CommonOrganization } from '@/types';
 
 export const mockOptometryRecords: OptometryRecord[] = [
   {
@@ -9,7 +9,9 @@ export const mockOptometryRecords: OptometryRecord[] = [
     pd: 64,
     organization: '爱尔眼科医院',
     optometrist: '张医生',
+    photos: [],
     notes: '初次建立视力档案，双眼近视度数中等',
+    tags: [],
     createdAt: '2023-06-15T10:00:00Z',
     updatedAt: '2023-06-15T10:00:00Z',
   },
@@ -21,7 +23,9 @@ export const mockOptometryRecords: OptometryRecord[] = [
     pd: 64,
     organization: '爱尔眼科医院',
     optometrist: '张医生',
+    photos: [],
     notes: '度数略有上升，左眼增加25度，右眼增加25度',
+    tags: [],
     createdAt: '2023-12-20T09:30:00Z',
     updatedAt: '2023-12-20T09:30:00Z',
   },
@@ -33,7 +37,9 @@ export const mockOptometryRecords: OptometryRecord[] = [
     pd: 64,
     organization: '同仁医院眼科',
     optometrist: '李医生',
+    photos: [],
     notes: '散光有所增加，矫正视力略有下降，建议注意用眼休息',
+    tags: ['医院复查'],
     createdAt: '2024-06-18T14:20:00Z',
     updatedAt: '2024-06-18T14:20:00Z',
   },
@@ -45,7 +51,9 @@ export const mockOptometryRecords: OptometryRecord[] = [
     pd: 64,
     organization: '同仁医院眼科',
     optometrist: '李医生',
+    photos: [],
     notes: '度数稳定增长，建议每半年复查一次',
+    tags: [],
     createdAt: '2024-12-15T11:00:00Z',
     updatedAt: '2024-12-15T11:00:00Z',
   },
@@ -57,7 +65,9 @@ export const mockOptometryRecords: OptometryRecord[] = [
     pd: 65,
     organization: '爱尔眼科医院',
     optometrist: '王医生',
+    photos: [],
     notes: '散光变化明显，建议减少夜间长时间使用电子设备',
+    tags: ['需要关注'],
     createdAt: '2025-06-10T10:15:00Z',
     updatedAt: '2025-06-10T10:15:00Z',
   },
@@ -69,7 +79,9 @@ export const mockOptometryRecords: OptometryRecord[] = [
     pd: 65,
     organization: '爱尔眼科医院',
     optometrist: '王医生',
+    photos: [],
     notes: '本次验光矫正视力良好，继续保持良好用眼习惯',
+    tags: [],
     createdAt: '2026-01-08T09:45:00Z',
     updatedAt: '2026-01-08T09:45:00Z',
   },
@@ -92,8 +104,10 @@ export const mockGlasses: Glasses[] = [
     price: 1580,
     optometryId: 'opt-005',
     status: 'active',
+    role: 'primary',
     replacementCycleMonths: 12,
     notes: '主要日常佩戴，适合办公和通勤',
+    tags: ['办公眼镜'],
     createdAt: '2025-06-20T00:00:00Z',
     updatedAt: '2025-06-20T00:00:00Z',
   },
@@ -113,8 +127,10 @@ export const mockGlasses: Glasses[] = [
     price: 2200,
     optometryId: 'opt-005',
     status: 'standby',
+    role: 'standby',
     replacementCycleMonths: 18,
     notes: '运动和户外活动时佩戴',
+    tags: ['运动专用', '户外活动'],
     createdAt: '2025-09-15T00:00:00Z',
     updatedAt: '2025-09-15T00:00:00Z',
   },
@@ -134,8 +150,10 @@ export const mockGlasses: Glasses[] = [
     price: 1380,
     optometryId: 'opt-003',
     status: 'retired',
+    role: 'retired',
     replacementCycleMonths: 12,
     notes: '已更换，留作备用',
+    tags: [],
     createdAt: '2024-06-20T00:00:00Z',
     updatedAt: '2025-06-20T00:00:00Z',
   },
@@ -152,6 +170,7 @@ export const mockDailyLogs: DailyLog[] = [
     durationMinutes: 45,
     glassesId: 'gls-001',
     notes: '连续写代码4小时后出现症状',
+    tags: [],
     createdAt: '2026-06-10T18:30:00Z',
   },
   {
@@ -164,6 +183,7 @@ export const mockDailyLogs: DailyLog[] = [
     durationMinutes: 90,
     glassesId: 'gls-001',
     notes: '玩游戏3小时后感觉视力模糊',
+    tags: ['夜间明显'],
     createdAt: '2026-06-12T21:00:00Z',
   },
   {
@@ -176,6 +196,7 @@ export const mockDailyLogs: DailyLog[] = [
     durationMinutes: 30,
     glassesId: 'gls-001',
     notes: '空调房里办公感觉干涩',
+    tags: [],
     createdAt: '2026-06-14T14:00:00Z',
   },
   {
@@ -188,6 +209,7 @@ export const mockDailyLogs: DailyLog[] = [
     durationMinutes: 60,
     glassesId: 'gls-001',
     notes: '深夜刷手机后感觉头痛',
+    tags: ['夜间明显'],
     createdAt: '2026-06-15T22:30:00Z',
   },
   {
@@ -200,6 +222,7 @@ export const mockDailyLogs: DailyLog[] = [
     durationMinutes: 20,
     glassesId: 'gls-002',
     notes: '长时间驾驶后感觉轻微眩晕',
+    tags: ['户外活动'],
     createdAt: '2026-06-17T16:00:00Z',
   },
   {
@@ -212,12 +235,136 @@ export const mockDailyLogs: DailyLog[] = [
     durationMinutes: 40,
     glassesId: 'gls-001',
     notes: '连续阅读专业书籍',
+    tags: [],
     createdAt: '2026-06-18T11:00:00Z',
   },
 ];
 
 export const defaultSettings: AppSettings = {
   recommendedCheckupIntervalMonths: 6,
+  defaultReplacementCycleMonths: 12,
   notificationsEnabled: true,
+  checkupReminderEnabled: true,
+  lensReplacementReminderEnabled: true,
+  degreeChangeReminderEnabled: true,
   theme: 'light',
+  currentProfileId: 'default',
 };
+
+export const mockReminders: Reminder[] = [
+  {
+    id: 'rem-001',
+    type: 'checkup',
+    title: '临近验光复查时间',
+    description: '距离建议验光日期还有30天',
+    date: '2026-07-08',
+    priority: 'low',
+    relatedId: 'opt-006',
+    isRead: false,
+    isDismissed: false,
+    createdAt: '2026-06-08T09:00:00Z',
+  },
+  {
+    id: 'rem-002',
+    type: 'lens_replacement',
+    title: '日常通勤款 镜片临近更换周期',
+    description: '距离建议更换还有30天',
+    date: '2026-06-20',
+    priority: 'medium',
+    relatedId: 'gls-001',
+    isRead: true,
+    isDismissed: false,
+    createdAt: '2026-05-21T10:00:00Z',
+  },
+  {
+    id: 'rem-003',
+    type: 'degree_change',
+    title: '度数变化较大请注意',
+    description: '相比上次验光，左眼变化 -0.25D，右眼变化 -0.25D',
+    priority: 'high',
+    relatedId: 'opt-006',
+    isRead: false,
+    isDismissed: false,
+    createdAt: '2026-01-08T10:00:00Z',
+  },
+];
+
+export const mockPlans: OptometryPlan[] = [
+  {
+    id: 'plan-001',
+    title: '半年度验光复查',
+    plannedDate: '2026-07-08',
+    organization: '爱尔眼科医院',
+    notes: '定期复查，关注散光变化',
+    status: 'planned',
+    type: 'checkup',
+    createdAt: '2026-06-01T10:00:00Z',
+    updatedAt: '2026-06-01T10:00:00Z',
+  },
+  {
+    id: 'plan-002',
+    title: '更换日常通勤款镜片',
+    plannedDate: '2026-06-20',
+    organization: '本地眼镜店',
+    status: 'in_progress',
+    glassesId: 'gls-001',
+    type: 'replacement',
+    createdAt: '2026-05-20T10:00:00Z',
+    updatedAt: '2026-06-01T10:00:00Z',
+  },
+];
+
+export const mockGoals: HealthGoal[] = [
+  {
+    id: 'goal-001',
+    type: 'weekly_discomfort_decrease',
+    title: '周不适记录减少',
+    target: 2,
+    current: 4,
+    unit: '次/周',
+    isActive: true,
+    createdAt: '2026-06-01T10:00:00Z',
+    updatedAt: '2026-06-18T10:00:00Z',
+  },
+  {
+    id: 'goal-002',
+    type: 'consecutive_recording',
+    title: '连续记录天数',
+    target: 7,
+    current: 3,
+    unit: '天',
+    isActive: true,
+    createdAt: '2026-06-01T10:00:00Z',
+    updatedAt: '2026-06-18T10:00:00Z',
+  },
+];
+
+export const mockProfiles: UserProfile[] = [
+  {
+    id: 'default',
+    name: '我',
+    relation: '本人',
+    createdAt: '2023-06-15T10:00:00Z',
+  },
+];
+
+export const mockOrganizations: CommonOrganization[] = [
+  {
+    id: 'org-001',
+    name: '爱尔眼科医院',
+    address: '北京市朝阳区建国路88号',
+    useCount: 4,
+  },
+  {
+    id: 'org-002',
+    name: '同仁医院眼科',
+    address: '北京市东城区东交民巷1号',
+    useCount: 2,
+  },
+  {
+    id: 'org-003',
+    name: '本地眼镜店',
+    address: '北京市海淀区中关村大街',
+    useCount: 1,
+  },
+];

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Plus, Glasses as GlassesIcon, Edit, Trash2, Calendar, DollarSign, RefreshCw } from 'lucide-react';
+import { Plus, Glasses as GlassesIcon, Edit, Trash2, Calendar, DollarSign, RefreshCw, Star, Copy, Tag } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import RingProgress from '@/components/charts/RingProgress';
@@ -12,23 +12,40 @@ import {
   getGlassesDaysUntilReplacement,
 } from '@/utils/visionUtils';
 import { formatDate, formatPrice } from '@/utils/dateUtils';
-import { GLASSES_STATUS_LABELS } from '@/types';
+import { GLASSES_ROLE_LABELS } from '@/types';
 
 export default function GlassesList() {
-  const { glasses, deleteGlasses, updateGlasses } = useGlassesStore();
+  const { glasses, deleteGlasses, updateGlasses, setPrimary, markReplacement, duplicateGlasses } = useGlassesStore();
   const records = useOptometryStore((s) => s.records);
-  const sorted = [...glasses].sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+  const sorted = [...glasses].sort((a, b) => {
+    if (a.role === 'primary' && b.role !== 'primary') return -1;
+    if (a.role !== 'primary' && b.role === 'primary') return 1;
+    if (a.role === 'standby' && b.role === 'retired') return -1;
+    if (a.role === 'retired' && b.role === 'standby') return 1;
+    return new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime();
+  });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge variant="success">使用中</Badge>;
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'primary':
+        return (
+          <Badge variant="warning" className="flex items-center gap-1">
+            <Star className="w-3 h-3" />
+            {GLASSES_ROLE_LABELS.primary}
+          </Badge>
+        );
       case 'standby':
-        return <Badge variant="info">备用</Badge>;
+        return <Badge variant="info">{GLASSES_ROLE_LABELS.standby}</Badge>;
       case 'retired':
-        return <Badge variant="default">已更换</Badge>;
+        return <Badge variant="default">{GLASSES_ROLE_LABELS.retired}</Badge>;
       default:
         return null;
+    }
+  };
+
+  const handleMarkReplacement = (id: string) => {
+    if (window.confirm('确认标记更换？将自动创建一副新眼镜副本')) {
+      markReplacement(id);
     }
   };
 
@@ -75,7 +92,7 @@ export default function GlassesList() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-serif text-lg font-semibold text-primary-800">{g.name}</h3>
-                          {getStatusBadge(g.status)}
+                          {getRoleBadge(g.role)}
                         </div>
                         <p className="text-sm text-primary-500 mt-0.5">
                           {g.frameBrand || '未记录品牌'}
@@ -85,24 +102,6 @@ export default function GlassesList() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      {g.status !== 'retired' && (
-                        <button
-                          onClick={() => updateGlasses(g.id, { status: 'retired' })}
-                          className="p-2 rounded-lg text-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-all"
-                          title="标记为已更换"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                        </button>
-                      )}
-                      {g.status === 'retired' && (
-                        <button
-                          onClick={() => updateGlasses(g.id, { status: 'standby' })}
-                          className="p-2 rounded-lg text-accent-400 hover:text-accent-600 hover:bg-accent-50 transition-all"
-                          title="恢复为备用"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                        </button>
-                      )}
                       <button
                         onClick={() => deleteGlasses(g.id)}
                         className="p-2 rounded-lg text-primary-400 hover:text-red-500 hover:bg-red-50 transition-all"
@@ -117,6 +116,17 @@ export default function GlassesList() {
                       </Link>
                     </div>
                   </div>
+
+                  {g.tags.length > 0 && (
+                    <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                      <Tag className="w-3 h-3 text-primary-400" />
+                      {g.tags.map((tag) => (
+                        <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 border border-primary-100">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="flex items-start gap-5">
                     {g.status !== 'retired' && (
@@ -178,6 +188,42 @@ export default function GlassesList() {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-primary-100 flex items-center gap-2 flex-wrap">
+                    {g.role !== 'primary' && g.role !== 'retired' && (
+                      <button
+                        onClick={() => setPrimary(g.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                      >
+                        <Star className="w-3.5 h-3.5" />
+                        设为主力
+                      </button>
+                    )}
+                    {g.role === 'primary' && (
+                      <button
+                        onClick={() => updateGlasses(g.id, { role: 'standby' })}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                      >
+                        设为备用
+                      </button>
+                    )}
+                    {g.role !== 'retired' && (
+                      <button
+                        onClick={() => handleMarkReplacement(g.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-50 text-primary-700 hover:bg-primary-100 transition-colors"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        标记更换
+                      </button>
+                    )}
+                    <button
+                      onClick={() => duplicateGlasses(g.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-50 text-primary-700 hover:bg-primary-100 transition-colors"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      复制
+                    </button>
                   </div>
                 </div>
               </Card>

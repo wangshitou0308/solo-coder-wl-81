@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import VisionTrendChart from '@/components/charts/VisionTrendChart';
@@ -11,11 +13,14 @@ import {
   TrendingUp,
   Glasses as GlassesIcon,
   ArrowRight,
+  Plus,
+  X,
 } from 'lucide-react';
 import { useOptometryStore } from '@/store/optometryStore';
 import { useGlassesStore } from '@/store/glassesStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useDailyLogStore } from '@/store/dailyLogStore';
+import { useProfileStore } from '@/store/profileStore';
 import {
   getLatestOptometry,
   sortOptometryByDate,
@@ -26,14 +31,62 @@ import {
   getDaysUntilCheckup,
   generateReminders,
 } from '@/utils/visionUtils';
-import { formatDate, formatSphere, formatCylinder, formatAxis, formatVision } from '@/utils/dateUtils';
-import { Link } from 'react-router-dom';
+import {
+  formatDate,
+  formatSphere,
+  formatCylinder,
+  formatAxis,
+  formatVision,
+  getTodayStr,
+  getNowTimeStr,
+} from '@/utils/dateUtils';
+import {
+  SYMPTOM_LABELS,
+  SCENE_LABELS,
+  SEVERITY_LABELS,
+} from '@/types';
+import type { SymptomType, UsageScene, SeverityLevel } from '@/types';
+
+const SYMPTOM_OPTIONS: SymptomType[] = [
+  'eye_strain',
+  'dryness',
+  'dizziness',
+  'blurred_vision',
+  'headache',
+  'tearing',
+  'itching',
+  'other',
+];
+
+const SCENE_OPTIONS: UsageScene[] = [
+  'screen_work',
+  'reading',
+  'driving',
+  'outdoor',
+  'night_use',
+  'gaming',
+  'social',
+  'other',
+];
+
+const SEVERITY_OPTIONS: SeverityLevel[] = ['mild', 'moderate', 'severe'];
 
 export default function Dashboard() {
   const records = useOptometryStore((s) => s.records);
   const glasses = useGlassesStore((s) => s.glasses);
   const logs = useDailyLogStore((s) => s.logs);
+  const addLog = useDailyLogStore((s) => s.addLog);
   const checkupInterval = useSettingsStore((s) => s.recommendedCheckupIntervalMonths);
+  const profiles = useProfileStore((s) => s.profiles);
+  const activeProfileId = useProfileStore((s) => s.activeProfileId);
+
+  const activeProfile = profiles.find((p) => p.id === activeProfileId);
+
+  const [showQuickRecord, setShowQuickRecord] = useState(false);
+  const [selectedSymptoms, setSelectedSymptoms] = useState<SymptomType[]>([]);
+  const [selectedSeverity, setSelectedSeverity] = useState<SeverityLevel>('mild');
+  const [selectedScene, setSelectedScene] = useState<UsageScene>('screen_work');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const latest = getLatestOptometry(records);
   const sortedRecords = sortOptometryByDate(records);
@@ -44,8 +97,159 @@ export default function Dashboard() {
   const daysUntilCheckup = getDaysUntilCheckup(records, checkupInterval);
   const recentLogs = logs.slice(0, 3);
 
+  const toggleSymptom = (symptom: SymptomType) => {
+    setSelectedSymptoms((prev) =>
+      prev.includes(symptom)
+        ? prev.filter((s) => s !== symptom)
+        : [...prev, symptom]
+    );
+  };
+
+  const handleQuickSave = () => {
+    if (selectedSymptoms.length === 0) return;
+    addLog({
+      recordDate: getTodayStr(),
+      recordTime: getNowTimeStr(),
+      symptoms: selectedSymptoms,
+      severity: selectedSeverity,
+      scene: selectedScene,
+      tags: [],
+    });
+    setShowQuickRecord(false);
+    setSelectedSymptoms([]);
+    setSelectedSeverity('mild');
+    setSelectedScene('screen_work');
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        {activeProfile && (
+          <span className="text-sm text-primary-500">
+            当前档案: <span className="font-medium text-primary-700">{activeProfile.name}</span>
+          </span>
+        )}
+        <button
+          onClick={() => setShowQuickRecord(true)}
+          className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-accent-600 hover:bg-accent-700 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
+        >
+          <Plus className="w-4 h-4" />
+          📝 记录今日不适
+        </button>
+      </div>
+
+      {showSuccess && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-5 py-3 bg-green-500 text-white rounded-xl shadow-lg animate-fade-in">
+          <CheckCircle className="w-5 h-5" />
+          <span className="font-medium">记录保存成功！</span>
+        </div>
+      )}
+
+      {showQuickRecord && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowQuickRecord(false);
+            }
+          }}
+        >
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5 border border-white/50">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-lg font-semibold text-primary-800">📝 记录今日不适</h3>
+              <button
+                onClick={() => setShowQuickRecord(false)}
+                className="p-1.5 rounded-lg hover:bg-primary-100 text-primary-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 text-sm text-primary-500">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                {formatDate(getTodayStr())}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {getNowTimeStr()}
+              </span>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-primary-700 mb-2">症状（多选）</p>
+              <div className="flex flex-wrap gap-2">
+                {SYMPTOM_OPTIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => toggleSymptom(s)}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
+                      selectedSymptoms.includes(s)
+                        ? 'bg-accent-600 text-white border-accent-600 shadow-sm'
+                        : 'bg-white text-primary-600 border-primary-200 hover:border-accent-400'
+                    }`}
+                  >
+                    {SYMPTOM_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-primary-700 mb-2">严重程度</p>
+              <div className="flex gap-2">
+                {SEVERITY_OPTIONS.map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setSelectedSeverity(level)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all ${
+                      selectedSeverity === level
+                        ? level === 'mild'
+                          ? 'bg-green-500 text-white border-green-500 shadow-sm'
+                          : level === 'moderate'
+                          ? 'bg-warning-500 text-white border-warning-500 shadow-sm'
+                          : 'bg-red-500 text-white border-red-500 shadow-sm'
+                        : 'bg-white text-primary-600 border-primary-200 hover:border-primary-300'
+                    }`}
+                  >
+                    {SEVERITY_LABELS[level]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-primary-700 mb-2">使用场景</p>
+              <select
+                value={selectedScene}
+                onChange={(e) => setSelectedScene(e.target.value as UsageScene)}
+                className="w-full px-3 py-2 rounded-xl border border-primary-200 bg-white text-primary-700 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-400"
+              >
+                {SCENE_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {SCENE_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={handleQuickSave}
+              disabled={selectedSymptoms.length === 0}
+              className={`w-full py-3 rounded-xl font-medium text-white shadow-md transition-all ${
+                selectedSymptoms.length === 0
+                  ? 'bg-primary-200 cursor-not-allowed'
+                  : 'bg-accent-600 hover:bg-accent-700 hover:shadow-lg'
+              }`}
+            >
+              保存记录
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6 bg-gradient-primary text-white overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-24 -mt-24" />
@@ -304,17 +508,7 @@ export default function Dashboard() {
                       key={s}
                       className="px-2 py-0.5 bg-white rounded-full text-xs text-primary-600 border border-primary-100"
                     >
-                      {s === 'eye_strain'
-                        ? '眼疲劳'
-                        : s === 'dryness'
-                        ? '干涩'
-                        : s === 'dizziness'
-                        ? '眩晕'
-                        : s === 'blurred_vision'
-                        ? '视物模糊'
-                        : s === 'headache'
-                        ? '头痛'
-                        : s}
+                      {SYMPTOM_LABELS[s] ?? s}
                     </span>
                   ))}
                 </div>

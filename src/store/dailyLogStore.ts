@@ -27,6 +27,7 @@ export const useDailyLogStore = create<DailyLogState>()(
       addLog: (log) => {
         const newLog: DailyLog = {
           ...log,
+          tags: log.tags ?? [],
           id: generateId(),
           createdAt: new Date().toISOString(),
         };

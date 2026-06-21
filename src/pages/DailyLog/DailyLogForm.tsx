@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Tag, X } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { useDailyLogStore } from '@/store/dailyLogStore';
 import { useGlassesStore } from '@/store/glassesStore';
 import type { DailyLog, SymptomType, UsageScene, SeverityLevel } from '@/types';
-import { SYMPTOM_LABELS, SCENE_LABELS, SEVERITY_LABELS } from '@/types';
+import { SYMPTOM_LABELS, SCENE_LABELS, SEVERITY_LABELS, DEFAULT_TAGS } from '@/types';
 import { getTodayStr } from '@/utils/dateUtils';
 
 export default function DailyLogForm() {
@@ -24,6 +24,8 @@ export default function DailyLogForm() {
   const [durationMinutes, setDurationMinutes] = useState('');
   const [glassesId, setGlassesId] = useState('');
   const [notes, setNotes] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [customTag, setCustomTag] = useState('');
 
   useEffect(() => {
     if (isEditing && id) {
@@ -37,6 +39,7 @@ export default function DailyLogForm() {
         setDurationMinutes(log.durationMinutes ? String(log.durationMinutes) : '');
         setGlassesId(log.glassesId || '');
         setNotes(log.notes || '');
+        setTags(log.tags || []);
       }
     }
   }, [isEditing, id, getLogById]);
@@ -45,6 +48,20 @@ export default function DailyLogForm() {
     setSymptoms((prev) =>
       prev.includes(symptom) ? prev.filter((s) => s !== symptom) : [...prev, symptom]
     );
+  };
+
+  const toggleTag = (tag: string) => {
+    setTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const addCustomTag = () => {
+    const trimmed = customTag.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags((prev) => [...prev, trimmed]);
+      setCustomTag('');
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,6 +79,7 @@ export default function DailyLogForm() {
       durationMinutes: durationMinutes ? parseInt(durationMinutes) : undefined,
       glassesId: glassesId || undefined,
       notes: notes || undefined,
+      tags,
     };
 
     if (isEditing && id) {
@@ -217,6 +235,66 @@ export default function DailyLogForm() {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h4 className="font-serif text-lg font-semibold text-primary-800 mb-4 flex items-center gap-2">
+            <Tag className="w-5 h-5 text-accent-500" />
+            标签
+          </h4>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {DEFAULT_TAGS.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  tags.includes(tag)
+                    ? 'bg-gradient-accent text-white shadow-md'
+                    : 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent-50 text-accent-700 rounded-full text-sm font-medium"
+                >
+                  {tag}
+                  <button type="button" onClick={() => toggleTag(tag)}>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="input-field flex-1"
+              placeholder="添加自定义标签..."
+              value={customTag}
+              onChange={(e) => setCustomTag(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addCustomTag();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addCustomTag}
+              className="btn-secondary"
+            >
+              添加
+            </button>
           </div>
         </Card>
 

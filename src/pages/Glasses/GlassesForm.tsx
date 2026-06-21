@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Tag, X } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { useGlassesStore } from '@/store/glassesStore';
 import { useOptometryStore } from '@/store/optometryStore';
-import type { Glasses, LensInfo } from '@/types';
-import { LENS_COATINGS_OPTIONS, LENS_TYPES, REFRACTIVE_INDEX_OPTIONS } from '@/types';
+import type { Glasses, LensInfo, GlassesRole } from '@/types';
+import { LENS_COATINGS_OPTIONS, LENS_TYPES, REFRACTIVE_INDEX_OPTIONS, DEFAULT_TAGS, GLASSES_ROLE_LABELS } from '@/types';
 import { getTodayStr, formatDate } from '@/utils/dateUtils';
 
 interface LensFormData {
@@ -14,6 +14,12 @@ interface LensFormData {
   brand: string;
   type: string;
 }
+
+const ROLE_STATUS_MAP: Record<GlassesRole, Glasses['status']> = {
+  primary: 'active',
+  standby: 'standby',
+  retired: 'retired',
+};
 
 export default function GlassesForm() {
   const navigate = useNavigate();
@@ -29,7 +35,7 @@ export default function GlassesForm() {
   const [purchaseDate, setPurchaseDate] = useState(getTodayStr());
   const [price, setPrice] = useState('');
   const [optometryId, setOptometryId] = useState('');
-  const [status, setStatus] = useState<Glasses['status']>('active');
+  const [role, setRole] = useState<GlassesRole>('primary');
   const [replacementCycleMonths, setReplacementCycleMonths] = useState('12');
   const [notes, setNotes] = useState('');
   const [lens, setLens] = useState<LensFormData>({
@@ -38,6 +44,8 @@ export default function GlassesForm() {
     brand: '',
     type: '单光',
   });
+  const [tags, setTags] = useState<string[]>([]);
+  const [customTag, setCustomTag] = useState('');
 
   useEffect(() => {
     if (isEditing && id) {
@@ -50,7 +58,7 @@ export default function GlassesForm() {
         setPurchaseDate(glasses.purchaseDate);
         setPrice(glasses.price ? String(glasses.price) : '');
         setOptometryId(glasses.optometryId || '');
-        setStatus(glasses.status);
+        setRole(glasses.role || 'primary');
         setReplacementCycleMonths(String(glasses.replacementCycleMonths));
         setNotes(glasses.notes || '');
         setLens({
@@ -59,6 +67,7 @@ export default function GlassesForm() {
           brand: glasses.lens.brand || '',
           type: glasses.lens.type || '单光',
         });
+        setTags(glasses.tags || []);
       }
     }
   }, [isEditing, id, getGlassesById]);
@@ -70,6 +79,24 @@ export default function GlassesForm() {
         ? prev.coatings.filter((c) => c !== coating)
         : [...prev.coatings, coating],
     }));
+  };
+
+  const toggleTag = (tag: string) => {
+    setTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const addCustomTag = () => {
+    const trimmed = customTag.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags((prev) => [...prev, trimmed]);
+      setCustomTag('');
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setTags((prev) => prev.filter((t) => t !== tag));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -90,9 +117,11 @@ export default function GlassesForm() {
       purchaseDate,
       price: price ? parseFloat(price) : undefined,
       optometryId: optometryId || undefined,
-      status,
+      status: ROLE_STATUS_MAP[role],
+      role,
       replacementCycleMonths: parseInt(replacementCycleMonths) || 12,
       notes: notes || undefined,
+      tags,
     };
 
     if (isEditing && id) {
@@ -143,16 +172,23 @@ export default function GlassesForm() {
               />
             </div>
             <div>
-              <label className="form-label">使用状态</label>
-              <select
-                className="input-field"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as Glasses['status'])}
-              >
-                <option value="active">使用中</option>
-                <option value="standby">备用</option>
-                <option value="retired">已更换</option>
-              </select>
+              <label className="form-label">佩戴角色</label>
+              <div className="flex gap-2">
+                {(Object.keys(GLASSES_ROLE_LABELS) as GlassesRole[]).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      role === r
+                        ? 'bg-gradient-accent text-white shadow-md'
+                        : 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+                    }`}
+                  >
+                    {GLASSES_ROLE_LABELS[r]}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label className="form-label">建议更换周期（月）</label>
@@ -292,6 +328,70 @@ export default function GlassesForm() {
               ))}
             </div>
           </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Tag className="w-5 h-5 text-primary-600" />
+            <h4 className="font-serif text-lg font-semibold text-primary-800">标签</h4>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {DEFAULT_TAGS.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  tags.includes(tag)
+                    ? 'bg-gradient-accent text-white shadow-md'
+                    : 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              className="input-field flex-1"
+              placeholder="自定义标签..."
+              value={customTag}
+              onChange={(e) => setCustomTag(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addCustomTag();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addCustomTag}
+              className="px-4 py-2 rounded-lg bg-primary-100 text-primary-700 hover:bg-primary-200 text-sm font-medium transition-all"
+            >
+              添加
+            </button>
+          </div>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-100 text-primary-700 text-sm font-medium"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="p-0.5 rounded-full hover:bg-primary-200 transition-all"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card className="p-6">
